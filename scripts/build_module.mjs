@@ -82,7 +82,7 @@ function composeItemSystem(type) {
 }
 
 function randomId() {
-  return crypto.randomBytes(8).toString("base64url").slice(0, 16);
+  return crypto.randomBytes(8).toString("hex");
 }
 
 function stats(documentType) {

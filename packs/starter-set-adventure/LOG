@@ -1,1 +1,5 @@
-2026/04/14-10:15:41.491 8064 Delete type=3 #1
+2026/04/14-10:25:16.864 a3bc Recovering log #3
+2026/04/14-10:25:16.865 a3bc Level-0 table #5: started
+2026/04/14-10:25:16.871 a3bc Level-0 table #5: 145834 bytes OK
+2026/04/14-10:25:16.888 a3bc Delete type=0 #3
+2026/04/14-10:25:16.888 a3bc Delete type=3 #2

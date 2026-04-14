@@ -83,6 +83,7 @@
       "thumbnail": "modules/fallout-starter-set-commonwealth/assets/starter-set/pages/page-001.jpg"
     }
   ],
-  "manifest": "",
+  "url": "https://github.com/Barathos/Fallout-Starter-Set",
+  "manifest": "https://raw.githubusercontent.com/Barathos/Fallout-Starter-Set/main/module.json",
   "download": ""
 }

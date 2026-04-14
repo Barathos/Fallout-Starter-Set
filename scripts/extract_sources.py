@@ -34,6 +34,46 @@ MAJOR_HEADINGS = (
     "CAMPAIGN OVERVIEW",
     "PROLOGUE",
 )
+STRUCTURAL_HEADING_PREFIXES = (
+    "Overview",
+    "Introduction",
+    "Quest Goals",
+    "Act ",
+    "Scene ",
+    "Encounter-",
+    "Part ",
+    "Campaign ",
+    "Conclusion",
+)
+
+STATBLOCK_EXACT_LINES = {
+    "SKILLS",
+    "CARRY WEIGHT",
+    "MELEE BONUS",
+    "LUCK POINTS",
+    "ENERGY DR",
+    "POISON DR",
+    "SPECIAL ABILITIES",
+    "INVENTORY",
+    "BODY MIND",
+    "MELEEGUNS OTHER",
+    "HPINITIATIVE",
+    "ENERGY DRRAD. DR",
+    "PHYSICAL DR",
+    "RAD. DR",
+}
+
+STATBLOCK_PATTERNS = (
+    r"^Level \d+,.*$",
+    r"^(Normal|Notable) Character \(\d+ XP\)$",
+    r"^[A-Z][A-Za-z'’ -]+ Level \d+,.*$",
+    r"^[SP ECIAL]{3,}(?:\s+\d+.*)?$",
+    r"^\d+ lbs\.$",
+    r"^[+\-—]?\d+(?:\s*CD)?$",
+    r"^\(? ?[\uf06e].*Tag Skill\)?$",
+    r"^[A-Za-z'’ -]+ ?[\uf06e]\d+.*$",
+    r"^\d+[A-Za-z].*$",
+)
 
 
 def slugify(value: str) -> str:
@@ -128,21 +168,65 @@ def split_chapters(lines: list[str]) -> list[dict]:
     return chapters
 
 
-def is_heading(line: str) -> bool:
+def is_statblock_line(line: str) -> bool:
+    if not line:
+        return False
+    upper = line.upper()
+    collapsed = re.sub(r"[^A-Z]", "", upper)
+    if upper in STATBLOCK_EXACT_LINES:
+        return True
+    if upper in {"CARRY WEIGHT", "MELEE BONUS", "LUCK POINTS", "ENERGY DR", "POISON DR", "SPECIAL ABILITIES", "INVENTORY"}:
+        return True
+    if collapsed in {"BODYMIND", "MELEEGUNSOTHER", "HPINITIATIVE", "BODYMINDMELEEGUNSOTHER", "ENERGYDRRADDR"}:
+        return True
+    if "Tag Skill" in line or "\uf06e" in line or "" in line:
+        return True
+    for pattern in STATBLOCK_PATTERNS:
+        if re.fullmatch(pattern, line):
+            return True
+    if re.fullmatch(r"[—\-0-9 ]{1,12}", line):
+        return True
+    if re.fullmatch(r"(Head|Torso|Arms|Legs|Coat|Torso\)|Legs, Torso\)|Arms, Torso\)|Immune)", line):
+        return True
+    if re.fullmatch(r"(Medicine|Repair|Athletics|Big Guns|Energy Weapons|Lockpick|Science|Melee Weapons|Small Guns|Speech|Survival|Throwing|Unarmed|Explosives)", line):
+        return True
+    return False
+
+
+def looks_like_prose(line: str) -> bool:
+    if not line or is_statblock_line(line):
+        return False
+    if len(line) >= 60:
+        return True
+    if line.endswith("."):
+        return True
+    if re.search(r"[a-z].*[a-z].*[a-z]", line) and len(line.split()) >= 6:
+        return True
+    return False
+
+
+def is_heading(line: str, next_line: str = "") -> bool:
+    if is_statblock_line(line):
+        return False
     if line in MAJOR_HEADINGS:
         return True
     if line.startswith("ACT ") or line.startswith("SCENE ") or line.startswith("PART "):
+        return True
+    if line.startswith("ENCOUNTER-"):
         return True
     if len(line) > 80:
         return False
     if line.endswith("."):
         return False
+    if line.isupper():
+        return looks_like_prose(next_line) or next_line.startswith("If ") or next_line.startswith("The ")
     if re.fullmatch(r"[A-Z0-9 :’'\"&()\-]+", line) and any(ch.isalpha() for ch in line):
         return True
     if (
         re.fullmatch(r"[A-Z][A-Za-z0-9 :’'\"&(),\-]+", line)
         and sum(1 for token in line.split() if token) <= 8
         and ":" not in line[-1:]
+        and looks_like_prose(next_line)
     ):
         return True
     return False
@@ -156,6 +240,31 @@ def tidy_fragment(text: str) -> str:
 
 def paragraph_html(text: str) -> str:
     return f"<p>{escape_html(tidy_fragment(text))}</p>"
+
+
+def split_heading(line: str) -> tuple[str, str]:
+    if line.startswith("ENCOUNTER-"):
+        match = re.match(r"^(ENCOUNTER-[^:]+:\s*[A-Z0-9'’ -]+)(?=\s+[A-Z][a-z])", line)
+        if match:
+            title = match.group(1).strip()
+            remainder = line[match.end():].strip()
+            return title.title(), remainder
+    return (line.title() if line.upper() == line else line, "")
+
+
+def merge_short_sections(sections: list[dict]) -> list[dict]:
+    merged: list[dict] = []
+    for section in sections:
+        keep_separate = any(section["title"].startswith(prefix) for prefix in STRUCTURAL_HEADING_PREFIXES)
+
+        if merged and not keep_separate:
+            merged[-1]["html"] = (
+                f"{merged[-1]['html']}\n<h3>{escape_html(section['title'])}</h3>\n{section['html']}"
+            )
+            continue
+
+        merged.append(section)
+    return merged
 
 
 def build_sections(chapter: dict) -> list[dict]:
@@ -193,13 +302,18 @@ def build_sections(chapter: dict) -> list[dict]:
             )
             blocks = []
 
-    for raw_line in chapter["body"]:
+    for index, raw_line in enumerate(chapter["body"]):
         line = raw_line.strip()
+        next_line = chapter["body"][index + 1].strip() if index + 1 < len(chapter["body"]) else ""
         if not line or is_page_artifact(line):
             continue
-        if is_heading(line):
+        if is_statblock_line(line):
+            continue
+        if is_heading(line, next_line):
             flush_section()
-            current_title = line.title() if line.upper() == line else line
+            current_title, remainder = split_heading(line)
+            if remainder:
+                paragraph_buffer.append(remainder)
             continue
         if line.startswith("") or line.startswith("•"):
             flush_paragraph()
@@ -211,7 +325,7 @@ def build_sections(chapter: dict) -> list[dict]:
         paragraph_buffer.append(line)
 
     flush_section()
-    return sections
+    return merge_short_sections(sections)
 
 
 def locate_page_for_text(document: fitz.Document, needle: str, fallback: int = 0) -> int:

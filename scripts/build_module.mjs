@@ -506,6 +506,7 @@ function makeRollTable(name, results, formula, folder, sort) {
 function writeModuleManifest() {
   const manifestUrl = "https://raw.githubusercontent.com/Barathos/Fallout-Starter-Set/main/module.json";
   const projectUrl = "https://github.com/Barathos/Fallout-Starter-Set";
+  const downloadUrl = "https://github.com/Barathos/Fallout-Starter-Set/archive/refs/heads/main.zip";
   const manifest = {
     id: MODULE_ID,
     title: "Fallout Starter Set: Once Upon a Time in the Commonwealth",
@@ -590,7 +591,7 @@ function writeModuleManifest() {
     ],
     url: projectUrl,
     manifest: manifestUrl,
-    download: "",
+    download: downloadUrl,
   };
   fs.writeFileSync(path.join(ROOT, "module.json"), JSON.stringify(manifest, null, 2));
 }

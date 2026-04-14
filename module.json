@@ -1,0 +1,75 @@
+{
+  "id": "fallout-starter-set-commonwealth",
+  "title": "Fallout Starter Set: Once Upon a Time in the Commonwealth",
+  "description": "<p>A Foundry VTT starter-set module for the Fallout 2d20 system, built from the supplied starter booklet, core references, and the installed Fallout system data. It includes a ready-to-import adventure compendium, rendered booklet page art, and the starter loot tables as native Foundry RollTables.</p>",
+  "version": "0.1.0",
+  "compatibility": {
+    "minimum": "13",
+    "verified": "13"
+  },
+  "authors": [
+    {
+      "name": "OpenAI Codex",
+      "flags": {}
+    }
+  ],
+  "relationships": {
+    "systems": [
+      {
+        "id": "fallout",
+        "type": "system",
+        "compatibility": {
+          "minimum": "11.16.6"
+        }
+      }
+    ]
+  },
+  "packs": [
+    {
+      "name": "starter-set-adventure",
+      "label": "Starter Set Adventure",
+      "path": "packs/starter-set-adventure",
+      "type": "Adventure",
+      "system": "fallout",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER"
+      },
+      "banner": "modules/fallout-starter-set-commonwealth/assets/starter-set/pages/page-001.jpg",
+      "flags": {}
+    },
+    {
+      "name": "starter-set-rolltables",
+      "label": "Starter Set Roll Tables",
+      "path": "packs/starter-set-rolltables",
+      "type": "RollTable",
+      "system": "fallout",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER"
+      },
+      "flags": {}
+    }
+  ],
+  "packFolders": [
+    {
+      "name": "Fallout Starter Set",
+      "sorting": "a",
+      "color": "#4d6a79",
+      "packs": [
+        "starter-set-adventure",
+        "starter-set-rolltables"
+      ],
+      "folders": []
+    }
+  ],
+  "media": [
+    {
+      "type": "setup",
+      "caption": "Once Upon a Time in the Commonwealth",
+      "thumbnail": "modules/fallout-starter-set-commonwealth/assets/starter-set/pages/page-001.jpg"
+    }
+  ],
+  "manifest": "",
+  "download": ""
+}

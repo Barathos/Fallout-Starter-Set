@@ -1,0 +1,16 @@
+{
+  "name": "foundry-fallout-module",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "node scripts/build_module.mjs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "classic-level": "^3.0.0"
+  }
+}

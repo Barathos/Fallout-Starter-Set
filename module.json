@@ -49,6 +49,18 @@
         "ASSISTANT": "OWNER"
       },
       "flags": {}
+    },
+    {
+      "name": "starter-set-actors",
+      "label": "Starter Set Actors",
+      "path": "packs/starter-set-actors",
+      "type": "Actor",
+      "system": "fallout",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER"
+      },
+      "flags": {}
     }
   ],
   "packFolders": [
@@ -58,7 +70,8 @@
       "color": "#4d6a79",
       "packs": [
         "starter-set-adventure",
-        "starter-set-rolltables"
+        "starter-set-rolltables",
+        "starter-set-actors"
       ],
       "folders": []
     }

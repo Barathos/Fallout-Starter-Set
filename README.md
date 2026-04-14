@@ -7,6 +7,7 @@ This workspace now builds a Foundry VTT module for the Fallout 2d20 system from 
 - `module.json` for the `fallout-starter-set-commonwealth` package
 - An `Adventure` compendium with chapter journals, booklet facsimiles, and embedded loot tables
 - A separate `RollTable` compendium for the starter loot appendix
+- A separate `Actor` compendium for starter-set threats, allies, and reusable NPC profiles
 - Rendered booklet page art in `assets/starter-set/pages/`
 
 ## Source inputs
@@ -26,7 +27,8 @@ npm run build
 - The adventure content is generated from the converted DOCX for cleaner text sections.
 - The page art is rendered directly from the PDF so the visual reference stays close to the printed booklet.
 - The roll tables are recreated as native Foundry `RollTable` documents for quick use at the table.
-- This first pass focuses on journals, page art, and tables. It leaves room for later expansion into pregenerated actors, scenes, and map-driven encounter setup.
+- This pass now includes a starter-set actor roster for the named combatants, encounter creatures, robots, and reusable Diamond City support profiles.
+- Pregenerated PCs are intentionally not bundled here; the module assumes you already have those sheets available.
 
 ## Generated chapter journals
 

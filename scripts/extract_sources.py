@@ -45,10 +45,21 @@ STRUCTURAL_HEADING_PREFIXES = (
     "Campaign ",
     "Conclusion",
 )
+STATBLOCK_START_PATTERNS = (
+    r"^Level \d+,.*$",
+    r"^[A-Z][A-Za-z'’ -]+ Level \d+,.*$",
+    r"^PHYS\. DR.*$",
+    r"^BODY MIND.*$",
+    r"^MELEEGUNS OTHER.*$",
+    r"^HPINITIATIVE.*$",
+    r"^ENERGY DR.*$",
+    r"^RAD\. DR.*$",
+)
 
 STATBLOCK_EXACT_LINES = {
     "SKILLS",
     "CARRY WEIGHT",
+    "INITIATIVE",
     "MELEE BONUS",
     "LUCK POINTS",
     "ENERGY DR",
@@ -218,10 +229,10 @@ def is_heading(line: str, next_line: str = "") -> bool:
         return False
     if line.endswith("."):
         return False
-    if line.isupper():
-        return looks_like_prose(next_line) or next_line.startswith("If ") or next_line.startswith("The ")
-    if re.fullmatch(r"[A-Z0-9 :’'\"&()\-]+", line) and any(ch.isalpha() for ch in line):
-        return True
+    if "," in line:
+        return False
+    if line.startswith("") or line.startswith("("):
+        return False
     if (
         re.fullmatch(r"[A-Z][A-Za-z0-9 :’'\"&(),\-]+", line)
         and sum(1 for token in line.split() if token) <= 8
@@ -233,13 +244,108 @@ def is_heading(line: str, next_line: str = "") -> bool:
 
 
 def tidy_fragment(text: str) -> str:
-    text = text.replace("", "").replace("•", "").strip()
+    text = text.replace("", "").replace("•", "").replace("ï®", "").strip()
     text = re.sub(r"\s+", " ", text)
     return text
 
 
 def paragraph_html(text: str) -> str:
     return f"<p>{escape_html(tidy_fragment(text))}</p>"
+
+
+def is_statblock_start(line: str, next_line: str = "") -> bool:
+    upper = line.upper()
+    for pattern in STATBLOCK_START_PATTERNS:
+        if re.fullmatch(pattern, line):
+            return True
+    if line in {"Raider", "Dog", "Mister Gutsy", "Diamond City Security", "Miss Nanny Clara", "Synth Replica"} and re.search(r"^Level \d+,", next_line):
+        return True
+    if upper in {"SKILLS", "SPECIAL ABILITIES", "INVENTORY"}:
+        return True
+    if line.startswith("") and ("TN " in line or " CD " in line):
+        return True
+    return False
+
+
+def is_valid_subheading(title: str) -> bool:
+    if any(title.startswith(prefix) for prefix in STRUCTURAL_HEADING_PREFIXES):
+        return False
+    if len(title) < 4 or len(title) > 60:
+        return False
+    if re.search(r"\d", title):
+        return False
+    if "," in title:
+        return False
+    if re.search(r"\b(?:DR|CD|TN|STR|PER|AGI|END|CHA|INT|LCK|RAD|PHYS|ENERGY|POISON)\b", title.upper()):
+        return False
+    if title.upper() == title:
+        return False
+    if sum(1 for ch in title if ch.isalpha() and ch.isupper()) > max(1, len(title.split())):
+        return False
+    return True
+
+
+def is_resume_heading(line: str, next_line: str = "") -> bool:
+    if any(line.startswith(prefix) for prefix in STRUCTURAL_HEADING_PREFIXES):
+        return True
+    if line.isupper() and looks_like_prose(next_line) and not is_statblock_start(line, next_line):
+        return True
+    if is_valid_subheading(line) and looks_like_prose(next_line):
+        return True
+    return False
+
+
+def is_clean_prose_resume(line: str) -> bool:
+    if not looks_like_prose(line):
+        return False
+    if line.startswith("") or line.startswith("("):
+        return False
+    if re.search(r"\b(?:TN|CD|STR|PER|AGI|END|CHA|INT|LCK|DR)\b", line):
+        return False
+    if len(line.split()) < 8:
+        return False
+    return any(
+        line.startswith(prefix)
+        for prefix in (
+            "If ",
+            "The ",
+            "A ",
+            "An ",
+            "When ",
+            "Once ",
+            "As ",
+            "After ",
+            "During ",
+            "While ",
+            "These ",
+            "Those ",
+            "There ",
+            "Finally,",
+            "You ",
+            "PCs ",
+        )
+    )
+
+
+def sanitize_section_html(html: str) -> str:
+    patterns = (
+        r"This adds the weapon’s Fire Rate[^.]+\.",
+        r"Boosted Focused Institute Laser Rifle[^.]+\.",
+        r"\bAGI \+ Small Guns \(TN \d+\), [^.]+(?:\.)?",
+        r"\bSTR \+ Unarmed \(TN \d+\), [^.]+(?:\.)?",
+        r"\bSTR \+ Melee Weapons \(TN \d+\), [^.]+(?:\.)?",
+        r"\bPER \+ Energy Weapons \(TN \d+\), [^.]+(?:\.)?",
+        r"\bTIRE IRON: [^.]+(?:\.)?",
+        r"\bAUTO PIPE RIFLE: [^.]+(?:\.)?",
+        r"\bUNARMED STRIKE: [^.]+(?:\.)?",
+    )
+    for pattern in patterns:
+        html = re.sub(pattern, "", html)
+    html = re.sub(r"<p>\s*</p>", "", html)
+    html = re.sub(r"<ul>\s*</ul>", "", html)
+    html = re.sub(r"\s+</p>", "</p>", html)
+    html = re.sub(r"\s{2,}", " ", html)
+    return html.strip()
 
 
 def split_heading(line: str) -> tuple[str, str]:
@@ -258,9 +364,8 @@ def merge_short_sections(sections: list[dict]) -> list[dict]:
         keep_separate = any(section["title"].startswith(prefix) for prefix in STRUCTURAL_HEADING_PREFIXES)
 
         if merged and not keep_separate:
-            merged[-1]["html"] = (
-                f"{merged[-1]['html']}\n<h3>{escape_html(section['title'])}</h3>\n{section['html']}"
-            )
+            heading = f"\n<h3>{escape_html(section['title'])}</h3>" if is_valid_subheading(section["title"]) else ""
+            merged[-1]["html"] = f"{merged[-1]['html']}{heading}\n{section['html']}"
             continue
 
         merged.append(section)
@@ -273,6 +378,7 @@ def build_sections(chapter: dict) -> list[dict]:
     blocks: list[str] = []
     bullet_buffer: list[str] = []
     paragraph_buffer: list[str] = []
+    skipping_statblock = False
 
     def flush_paragraph() -> None:
         nonlocal paragraph_buffer
@@ -307,6 +413,16 @@ def build_sections(chapter: dict) -> list[dict]:
         next_line = chapter["body"][index + 1].strip() if index + 1 < len(chapter["body"]) else ""
         if not line or is_page_artifact(line):
             continue
+        if skipping_statblock:
+            if is_resume_heading(line, next_line) or is_clean_prose_resume(line):
+                skipping_statblock = False
+            else:
+                continue
+        if is_statblock_start(line, next_line):
+            flush_paragraph()
+            flush_bullets()
+            skipping_statblock = True
+            continue
         if is_statblock_line(line):
             continue
         if is_heading(line, next_line):
@@ -325,7 +441,10 @@ def build_sections(chapter: dict) -> list[dict]:
         paragraph_buffer.append(line)
 
     flush_section()
-    return merge_short_sections(sections)
+    sections = merge_short_sections(sections)
+    for section in sections:
+        section["html"] = sanitize_section_html(section["html"])
+    return sections
 
 
 def locate_page_for_text(document: fitz.Document, needle: str, fallback: int = 0) -> int:

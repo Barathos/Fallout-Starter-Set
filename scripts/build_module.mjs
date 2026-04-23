@@ -11,13 +11,37 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const BUILD = path.join(ROOT, "build");
 const DATA_PATH = path.join(BUILD, "starter-set-data.json");
 const MODULE_ID = "fallout-starter-set-commonwealth";
+const MODULE_VERSION = "0.1.1";
 const FALLOUT_SYSTEM_REPO = "https://github.com/Muttley/foundryvtt-fallout";
+const SOURCE_ID = "fallout_starter_set_commonwealth";
+const SOURCE_LABEL_KEY = "FSSC.SOURCE.fallout_starter_set_commonwealth";
 const TEMPLATE_PATH = path.join(ROOT, "Reference", "template.json");
 const PACKS_DIR = path.join(ROOT, "packs");
 const ADVENTURE_PACK = path.join(PACKS_DIR, "starter-set-adventure");
 const ROLLTABLE_PACK = path.join(PACKS_DIR, "starter-set-rolltables");
 const ACTOR_PACK = path.join(PACKS_DIR, "starter-set-actors");
 const SYSTEM_TEMPLATES = JSON.parse(fs.readFileSync(TEMPLATE_PATH, "utf8"));
+
+const SYSTEM_REFERENCE_PAGES = [
+  {
+    title: "Fallout System Quick Reference",
+    html: `<h2>Fallout Foundry System Notes</h2>
+<p>This page summarizes a few system features from the upstream Fallout 2d20 Foundry system that are useful while running the starter adventure.</p>
+<h3>Dice and Symbols</h3>
+<ul>
+<li>Use <code>/r 1dc</code> for one combat die, <code>/r 1dcef</code> to count effects, and <code>/r 1dcsum</code> to total combat dice results.</li>
+<li>Journal text can render Fallout symbols with <code>@fos[CD]</code> or <code>@fos[DC]</code> for the Pip-Boy die, <code>@fos[PH]</code> for Physical, <code>@fos[EN]</code> for Energy, <code>@fos[PO]</code> for Poison, and <code>@fos[RA]</code> for Radiation.</li>
+</ul>
+<h3>Compendium Source Filter</h3>
+<p>This module registers its own Fallout source id, <code>${SOURCE_ID}</code>. Starter-set items generated inside actors use that source id so they can participate in the Fallout system's source filter UI.</p>
+<h3>At the Table</h3>
+<ul>
+<li>The Fallout system includes D20 and combat-dice roller macros in its own macro compendium.</li>
+<li>NPC skills can be dragged from the Fallout system's Skills compendium onto NPC sheets if a generated actor needs manual adjustment.</li>
+<li>The starter-set actors in this module are intended as runnable table aids; use the booklet facsimile pages when you need to compare against the original print layout.</li>
+</ul>`,
+  },
+];
 
 function runExtractor() {
   const result = spawnSync(process.platform === "win32" ? "python.exe" : "python", [path.join(ROOT, "scripts", "extract_sources.py")], {
@@ -79,6 +103,9 @@ function composeItemSystem(type) {
     deepMerge(system, deepClone(SYSTEM_TEMPLATES.Item.templates[templateName]));
   }
   deepMerge(system, deepClone(itemTemplate));
+  if ("source" in system) {
+    system.source = SOURCE_ID;
+  }
   return system;
 }
 
@@ -513,7 +540,7 @@ function writeModuleManifest() {
     title: "Fallout Starter Set: Once Upon a Time in the Commonwealth",
     description:
       "<p>A Foundry VTT starter-set module for the Fallout 2d20 system, built from the supplied starter booklet, core references, and the installed Fallout system data. It includes a ready-to-import adventure compendium, rendered booklet page art, and the starter loot tables as native Foundry RollTables.</p>",
-    version: "0.1.0",
+    version: MODULE_VERSION,
     compatibility: {
       minimum: "13",
       verified: "13",
@@ -542,6 +569,7 @@ function writeModuleManifest() {
         path: "packs/starter-set-adventure",
         type: "Adventure",
         system: "fallout",
+        private: false,
         ownership: {
           PLAYER: "OBSERVER",
           ASSISTANT: "OWNER",
@@ -555,6 +583,7 @@ function writeModuleManifest() {
         path: "packs/starter-set-rolltables",
         type: "RollTable",
         system: "fallout",
+        private: false,
         ownership: {
           PLAYER: "OBSERVER",
           ASSISTANT: "OWNER",
@@ -567,6 +596,7 @@ function writeModuleManifest() {
         path: "packs/starter-set-actors",
         type: "Actor",
         system: "fallout",
+        private: false,
         ownership: {
           PLAYER: "OBSERVER",
           ASSISTANT: "OWNER",
@@ -590,11 +620,39 @@ function writeModuleManifest() {
         thumbnail: pageImageSrc(1),
       },
     ],
+    languages: [
+      {
+        lang: "en",
+        name: "English",
+        path: "lang/en.json",
+        flags: {},
+      },
+    ],
+    flags: {
+      [MODULE_ID]: {
+        "fallout-sources": {
+          [SOURCE_ID]: SOURCE_LABEL_KEY,
+        },
+      },
+    },
     url: projectUrl,
     manifest: manifestUrl,
     download: downloadUrl,
   };
   fs.writeFileSync(path.join(ROOT, "module.json"), JSON.stringify(manifest, null, 2));
+}
+
+function writeLocalization() {
+  const langDir = path.join(ROOT, "lang");
+  fs.mkdirSync(langDir, { recursive: true });
+  const localization = {
+    FSSC: {
+      SOURCE: {
+        fallout_starter_set_commonwealth: "Fallout Starter Set: Once Upon a Time in the Commonwealth",
+      },
+    },
+  };
+  fs.writeFileSync(path.join(langDir, "en.json"), `${JSON.stringify(localization, null, 2)}\n`);
 }
 
 async function writeAdventurePack(data) {
@@ -643,6 +701,15 @@ async function writeAdventurePack(data) {
       STORY_NPC_PAGES.map((page, index) => makeTextPage(page.title, page.html, (index + 1) * 100000)),
       journalSort + 100000,
       "icons/sundries/documents/blueprint-axe.webp"
+    )
+  );
+  journals.push(
+    makeJournal(
+      "Fallout System Quick Reference",
+      journalFolder._id,
+      SYSTEM_REFERENCE_PAGES.map((page, index) => makeTextPage(page.title, page.html, (index + 1) * 100000)),
+      journalSort + 200000,
+      "icons/sundries/scrolls/scroll-runed-brown.webp"
     )
   );
 
@@ -760,6 +827,8 @@ npm run build
 - The adventure content is generated from the converted DOCX for cleaner text sections.
 - The page art is rendered directly from the PDF so the visual reference stays close to the printed booklet.
 - The roll tables are recreated as native Foundry \`RollTable\` documents for quick use at the table.
+- The module registers a custom Fallout source id (\`${SOURCE_ID}\`) so generated starter-set items participate in the system's source filter UI.
+- The adventure includes a small Fallout system quick-reference journal for dice syntax, journal symbols, and source-filter behavior.
 - This pass now includes a starter-set actor roster for the named combatants, encounter creatures, robots, and reusable Diamond City support profiles.
 - Pregenerated PCs are intentionally not bundled here; the module assumes you already have those sheets available.
 
@@ -778,6 +847,7 @@ async function main() {
   await writeRolltablePack(data);
   await writeActorPack();
   writeModuleManifest();
+  writeLocalization();
   updatePackageJson();
   writeReadme(data);
   console.log("Built Fallout starter set module.");

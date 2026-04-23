@@ -2,7 +2,7 @@
   "id": "fallout-starter-set-commonwealth",
   "title": "Fallout Starter Set: Once Upon a Time in the Commonwealth",
   "description": "<p>A Foundry VTT starter-set module for the Fallout 2d20 system, built from the supplied starter booklet, core references, and the installed Fallout system data. It includes a ready-to-import adventure compendium, rendered booklet page art, and the starter loot tables as native Foundry RollTables.</p>",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "compatibility": {
     "minimum": "13",
     "verified": "13"
@@ -31,6 +31,7 @@
       "path": "packs/starter-set-adventure",
       "type": "Adventure",
       "system": "fallout",
+      "private": false,
       "ownership": {
         "PLAYER": "OBSERVER",
         "ASSISTANT": "OWNER"
@@ -44,6 +45,7 @@
       "path": "packs/starter-set-rolltables",
       "type": "RollTable",
       "system": "fallout",
+      "private": false,
       "ownership": {
         "PLAYER": "OBSERVER",
         "ASSISTANT": "OWNER"
@@ -56,6 +58,7 @@
       "path": "packs/starter-set-actors",
       "type": "Actor",
       "system": "fallout",
+      "private": false,
       "ownership": {
         "PLAYER": "OBSERVER",
         "ASSISTANT": "OWNER"
@@ -83,6 +86,21 @@
       "thumbnail": "modules/fallout-starter-set-commonwealth/assets/starter-set/pages/page-001.jpg"
     }
   ],
+  "languages": [
+    {
+      "lang": "en",
+      "name": "English",
+      "path": "lang/en.json",
+      "flags": {}
+    }
+  ],
+  "flags": {
+    "fallout-starter-set-commonwealth": {
+      "fallout-sources": {
+        "fallout_starter_set_commonwealth": "FSSC.SOURCE.fallout_starter_set_commonwealth"
+      }
+    }
+  },
   "url": "https://github.com/Barathos/Fallout-Starter-Set",
   "manifest": "https://raw.githubusercontent.com/Barathos/Fallout-Starter-Set/main/module.json",
   "download": "https://github.com/Barathos/Fallout-Starter-Set/archive/refs/heads/main.zip"

@@ -15,6 +15,7 @@ This workspace now builds a Foundry VTT module for the Fallout 2d20 system from 
 - `Reference/FalloutStarterSet_Adventure_Booklet-20220228 conv.docx`
 - `Reference/FalloutStarterSet_Adventure_Booklet-20220228.pdf`
 - Fallout system metadata under `Reference/system.json`
+- Fallout 2d20 Foundry system source: https://github.com/Muttley/foundryvtt-fallout
 
 ## Build
 

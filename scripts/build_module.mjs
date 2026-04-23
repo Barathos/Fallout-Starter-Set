@@ -11,6 +11,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const BUILD = path.join(ROOT, "build");
 const DATA_PATH = path.join(BUILD, "starter-set-data.json");
 const MODULE_ID = "fallout-starter-set-commonwealth";
+const FALLOUT_SYSTEM_REPO = "https://github.com/Muttley/foundryvtt-fallout";
 const TEMPLATE_PATH = path.join(ROOT, "Reference", "template.json");
 const PACKS_DIR = path.join(ROOT, "packs");
 const ADVENTURE_PACK = path.join(PACKS_DIR, "starter-set-adventure");
@@ -746,6 +747,7 @@ This workspace now builds a Foundry VTT module for the Fallout 2d20 system from 
 - \`Reference/FalloutStarterSet_Adventure_Booklet-20220228 conv.docx\`
 - \`Reference/FalloutStarterSet_Adventure_Booklet-20220228.pdf\`
 - Fallout system metadata under \`Reference/system.json\`
+- Fallout 2d20 Foundry system source: ${FALLOUT_SYSTEM_REPO}
 
 ## Build
 
